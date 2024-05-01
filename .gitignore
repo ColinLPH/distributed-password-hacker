@@ -1,0 +1,7 @@
+/cmake-build-debug/
+
+/controller/cmake-build-debug/
+/worker/cmake-build-debug/
+
+/controller/build/
+/worker/build/
