@@ -7,9 +7,12 @@
 
 #include <errno.h>
 #include <getopt.h>
+#include <stdio.h>
 #include <string.h>
-#include "options.h"
+#include <time.h>
 
+#include "options.h"
 int parse_args(int argc, char *argv[], struct options *opts);
+int check_algo(char *algo);
 
 #endif //PARSE_ARGS_H

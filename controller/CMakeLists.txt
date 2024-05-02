@@ -9,27 +9,28 @@ set(CMAKE_C_STANDARD 17)
 
 set(SANITIZE TRUE)
 
-set(SOURCE_DIR src)
-set(INCLUDE_DIR include)
-
 set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 
 set(SOURCE_LIST ${SOURCE_DIR}/main.c
         ${SOURCE_DIR}/parse_args.c
         ${SOURCE_DIR}/controller.c
-
+        ${SOURCE_DIR}/encrypt_pwd.c
 )
 set(HEADER_LIST ${INCLUDE_DIR}/parse_args.h
         ${INCLUDE_DIR}/controller.h
         ${INCLUDE_DIR}/options.h
+        ${INCLUDE_DIR}/encrypt_pwd.h
 )
 include_directories(${INCLUDE_DIR})
 
-add_executable(distributed-password-hacker ${SOURCE_MAIN} ${SOURCE_LIST} ${HEADER_LIST})
+# Find OpenSSL
+find_package(OpenSSL REQUIRED)
+
+add_executable(distributed-password-hacker ${SOURCE_LIST} ${HEADER_LIST})
 target_include_directories(distributed-password-hacker PRIVATE include)
-target_include_directories(distributed-password-hacker PRIVATE /usr/local/include)
 target_link_directories(distributed-password-hacker PRIVATE /usr/local/lib)
+target_link_libraries(distributed-password-hacker OpenSSL::SSL OpenSSL::Crypto)
 
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_include_directories(distributed-password-hacker PRIVATE /usr/include)
@@ -37,8 +38,8 @@ endif ()
 
 set_target_properties(distributed-password-hacker PROPERTIES
         VERSION ${PROJECT_VERSION}
-        SOVERSION ${PROJECT_VERSION_MAJOR})
-
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        OUTPUT_NAME "controller")
 
 # Add compiler flags
 target_compile_options(distributed-password-hacker PRIVATE
@@ -51,6 +52,4 @@ target_compile_options(distributed-password-hacker PRIVATE
         # Add more flags as needed
 )
 
-set_target_properties(distributed-password-hacker PROPERTIES OUTPUT_NAME "controller")
 install(TARGETS distributed-password-hacker DESTINATION bin)
-

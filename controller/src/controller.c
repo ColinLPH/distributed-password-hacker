@@ -4,13 +4,11 @@
 
 #include "controller.h"
 
-#include <stdio.h>
-
-#include "parse_args.h"
+#define SET_SIZE 15
+const char set[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e'};
 
 int run_controller(int argc, char *argv[], struct options *opts)
 {
-
     if(parse_args(argc, argv, opts) == -1)
     {
         //print error, clean up
@@ -18,11 +16,36 @@ int run_controller(int argc, char *argv[], struct options *opts)
         clean_up(opts);
         return EXIT_FAILURE;
     }
-
     print_options(opts);
-    clean_up(opts);
 
+    int pwd_len;
+    srand(time(NULL));
+    pwd_len = (rand() % opts->max_pwd_len)+1;           //random number from 1 to max_pwd_len
+    printf("Password length: %d\n", pwd_len);
+
+    char pwd[pwd_len+1];
+    memset(pwd, 0, sizeof(pwd));
+    generate_pwd(pwd, pwd_len);                         //generate random password
+    printf("Password: %s\n", pwd);
+
+    unsigned char hashed_str[EVP_MAX_MD_SIZE];
+    generate_hash(opts->algo, pwd, hashed_str);     //generate hash
+    print_hash(opts->algo, hashed_str);
+
+    //connect with workers, assign chunks
+    //coordinate tasks until completion
+    clean_up(opts);
     return EXIT_SUCCESS;
+}
+
+void generate_pwd(char *pwd, const int len)
+{
+    for(int i = 0; i < len; ++i)
+    {
+        const int ret = rand()%SET_SIZE;
+        pwd[i] = set[ret];
+    }
+    pwd[len] = '\0';
 }
 
 void clean_up(struct options *opts)
@@ -44,7 +67,7 @@ void clean_up(struct options *opts)
             }
             free(opts->wkr_addrs);
         }
-
+        free(opts);
     }
 }
 
@@ -64,4 +87,13 @@ void print_options(struct options *opts)
 void print_err(struct options *opts)
 {
     printf("%s", opts->err_msg);
+}
+
+void print_hash(const char *algo, const unsigned char *hashed_str)
+{
+    printf("%s Hashed_str: ", algo);
+    for(int i = 0; i < EVP_MD_size(EVP_get_digestbyname(algo)); i++) {
+        printf("%02x", hashed_str[i]);
+    }
+    printf("\n");
 }

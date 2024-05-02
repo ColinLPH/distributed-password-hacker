@@ -22,6 +22,11 @@ int parse_args(int argc, char *argv[], struct options *opts)
                 opts->ctrl_addr = strdup(optarg);
                 break;
             case 'a':
+                if(check_algo(optarg) == -1)
+                {
+                    strcpy(opts->err_msg, "Supported Algos: md5, sha-1, sha-256, sha-384, sha-512");
+                    return -1;
+                }
                 strcpy(opts->algo, optarg);
                 break;
             case 'l':
@@ -88,4 +93,29 @@ int parse_args(int argc, char *argv[], struct options *opts)
     }
 
     return 1;
+}
+
+int check_algo(char *algo)
+{
+    if(strcmp(algo, "md5") == 0)
+    {
+        return 0;
+    }
+    if(strcmp(algo, "sha-1") == 0)
+    {
+        return 0;
+    }
+    if(strcmp(algo, "sha-256") == 0)
+    {
+        return 0;
+    }
+    if(strcmp(algo, "sha-384") == 0)
+    {
+        return 0;
+    }
+    if(strcmp(algo, "sha-512") == 0)
+    {
+        return 0;
+    }
+    return -1;
 }
