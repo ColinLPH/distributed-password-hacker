@@ -16,8 +16,15 @@ set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 
 set(SOURCE_LIST ${SOURCE_DIR}/main.c
+        ${SOURCE_DIR}/encrypt_pwd.c
+        ${SOURCE_DIR}/parse_args.c
+        ${SOURCE_DIR}/worker.c
 )
-set(HEADER_LIST ${INCLUDE_DIR}
+set(HEADER_LIST ${INCLUDE_DIR}/worker.h
+        ${INCLUDE_DIR}/parse_args.h
+        ${INCLUDE_DIR}/options.h
+        ${INCLUDE_DIR}/encrypt_pwd.h
+
 )
 include_directories(${INCLUDE_DIR})
 
