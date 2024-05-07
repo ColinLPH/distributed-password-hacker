@@ -13,7 +13,6 @@
 
 #define DEFAULT_PWD_LEN 8
 #define DEFAULT_PORT 5000
-#define DEFAULT_CHK_SIZE 5
 
 struct options
 {

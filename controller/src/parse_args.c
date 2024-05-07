@@ -15,7 +15,7 @@ int parse_args(int argc, char *argv[], struct options *opts)
     optind = 1;
     errno = 0;
     options_init(opts);
-    while((c = getopt(argc, argv, ":s:a:l:p:c:")) != -1)
+    while((c = getopt(argc, argv, ":s:a:l:p:")) != -1)
     {
         switch(c)
         {
@@ -39,13 +39,6 @@ int parse_args(int argc, char *argv[], struct options *opts)
                 break;
             case 'p':
                 opts->port = (in_port_t) str_to_int(optarg, opts);
-                break;
-            case 'c':
-                opts->chunk_size = str_to_int(optarg, opts);
-                if(opts->chunk_size == -1)
-                {
-                    return -1;
-                }
                 break;
             case ':':
                 sprintf(opts->err_msg, "Flag -%c requires an argument\n", c);

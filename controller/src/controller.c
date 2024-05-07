@@ -21,7 +21,7 @@ int run_controller(int argc, char *argv[], struct options *opts)
     char pwd[opts->pwd_len+1];
     memset(pwd, 0, sizeof(pwd));
     generate_pwd(pwd, opts->pwd_len);                    //generate random password
-    printf("Password: %s %lu %lu\n", pwd, strlen(pwd), sizeof(pwd)/sizeof(pwd[0]));
+    printf("Password: %s\n", pwd);
 
     unsigned char hashed_str[EVP_MAX_MD_SIZE];
     generate_hash(opts->algo, pwd, hashed_str);     //generate hash
