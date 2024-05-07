@@ -7,14 +7,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "options.h"
+#include "structs.h"
 
 int parse_args(int argc, char *argv[], struct options *opts)
 {
     int c;
     optind = 1;
     errno = 0;
-    while((c = getopt(argc, argv, ":s:a:l:p:")) != -1)
+    options_init(opts);
+    while((c = getopt(argc, argv, ":s:a:l:p:c:")) != -1)
     {
         switch(c)
         {
@@ -24,34 +25,25 @@ int parse_args(int argc, char *argv[], struct options *opts)
             case 'a':
                 if(check_algo(optarg) == -1)
                 {
-                    strcpy(opts->err_msg, "Supported Algos: md5, sha-1, sha-256, sha-384, sha-512");
+                    strcpy(opts->err_msg, "Supported Algos: md5, sha1, sha256, sha384, sha512");
                     return -1;
                 }
-                strcpy(opts->algo, optarg);
+                snprintf(opts->algo, sizeof(opts->algo), "%s", optarg);
                 break;
             case 'l':
-                opts->max_pwd_len = strtol(optarg, NULL, 10);
-                if(errno == EINVAL)
+                opts->pwd_len = str_to_int(optarg, opts);
+                if(opts->pwd_len == -1)
                 {
-                    strcpy(opts->err_msg, "pwd len conversion failed\n");
-                    return -1;
-                }
-                if(errno == ERANGE)
-                {
-                    strcpy(opts->err_msg, "pwd len outside of range\n");
                     return -1;
                 }
                 break;
             case 'p':
-                opts->port = (in_port_t) strtol(optarg, NULL, 10);
-                if(errno == EINVAL)
+                opts->port = (in_port_t) str_to_int(optarg, opts);
+                break;
+            case 'c':
+                opts->chunk_size = str_to_int(optarg, opts);
+                if(opts->chunk_size == -1)
                 {
-                    strcpy(opts->err_msg, "pwd len conversion failed\n");
-                    return -1;
-                }
-                if(errno == ERANGE)
-                {
-                    strcpy(opts->err_msg, "pwd len outside of range\n");
                     return -1;
                 }
                 break;
@@ -93,6 +85,32 @@ int parse_args(int argc, char *argv[], struct options *opts)
     }
 
     return 1;
+}
+
+void options_init(struct options *opts)
+{
+    //assign default values
+    strcpy(opts->algo, "sha512");
+    opts->pwd_len = DEFAULT_PWD_LEN;
+    opts->port = DEFAULT_PORT;
+    opts->chunk_size = DEFAULT_CHK_SIZE;
+}
+
+int str_to_int(char *str, struct options *opts)
+{
+    errno = 0;
+    int ret = strtol(str, NULL, 10);
+    if(errno == EINVAL)
+    {
+        strcpy(opts->err_msg, "pwd len conversion failed\n");
+        return -1;
+    }
+    if(errno == ERANGE)
+    {
+        strcpy(opts->err_msg, "pwd len outside of range\n");
+        return -1;
+    }
+    return ret;
 }
 
 int check_algo(char *algo)

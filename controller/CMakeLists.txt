@@ -19,7 +19,7 @@ set(SOURCE_LIST ${SOURCE_DIR}/main.c
 )
 set(HEADER_LIST ${INCLUDE_DIR}/parse_args.h
         ${INCLUDE_DIR}/controller.h
-        ${INCLUDE_DIR}/options.h
+        ${INCLUDE_DIR}/structs.h
         ${INCLUDE_DIR}/encrypt_pwd.h
 )
 include_directories(${INCLUDE_DIR})

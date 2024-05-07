@@ -18,21 +18,27 @@ int run_controller(int argc, char *argv[], struct options *opts)
     }
     print_options(opts);
 
-    int pwd_len;
-    srand(time(NULL));
-    pwd_len = (rand() % opts->max_pwd_len)+1;           //random number from 1 to max_pwd_len
-    printf("Password length: %d\n", pwd_len);
-
-    char pwd[pwd_len+1];
+    char pwd[opts->pwd_len+1];
     memset(pwd, 0, sizeof(pwd));
-    generate_pwd(pwd, pwd_len);                         //generate random password
-    printf("Password: %s\n", pwd);
+    generate_pwd(pwd, opts->pwd_len);                    //generate random password
+    printf("Password: %s %lu %lu\n", pwd, strlen(pwd), sizeof(pwd)/sizeof(pwd[0]));
 
     unsigned char hashed_str[EVP_MAX_MD_SIZE];
     generate_hash(opts->algo, pwd, hashed_str);     //generate hash
     print_hash(opts->algo, hashed_str);
 
-    //connect with workers, assign chunks
+    //separate possible pwds into chunks
+    char chunks[SET_SIZE][opts->pwd_len];
+    for(int i = 0; i < SET_SIZE; ++i)
+    {
+        for(int j = 0; j < opts->pwd_len; ++j)
+        {
+            chunks[i][j] = set[i];
+        }
+    }
+
+    //connect with workers, send init, send assign chunks
+    //wait for replies with pollfd, send assigns again
     //coordinate tasks until completion
     clean_up(opts);
     return EXIT_SUCCESS;
@@ -40,6 +46,7 @@ int run_controller(int argc, char *argv[], struct options *opts)
 
 void generate_pwd(char *pwd, const int len)
 {
+    srand(time(NULL));
     for(int i = 0; i < len; ++i)
     {
         const int ret = rand()%SET_SIZE;
@@ -75,7 +82,7 @@ void print_options(struct options *opts)
 {
     printf("------------OPTIONS------------\n");
     printf("Controller IP: %s\nPort: %d\n", opts->ctrl_addr, opts->port);
-    printf("Hash Algo: %s\nMax Password Len: %d\n", opts->algo, opts->max_pwd_len);
+    printf("Hash Algo: %s\nPassword Len: %d\n", opts->algo, opts->pwd_len);
     printf("Number of Workers: %d\n", opts->num_wkrs);
     for(int i = 0; i < opts->num_wkrs; ++i)
     {
@@ -96,4 +103,6 @@ void print_hash(const char *algo, const unsigned char *hashed_str)
         printf("%02x", hashed_str[i]);
     }
     printf("\n");
+
 }
+
