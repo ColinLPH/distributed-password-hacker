@@ -5,6 +5,9 @@
 #ifndef WORKER_H
 #define WORKER_H
 
+
+#include <arpa/inet.h>
+#include <unistd.h>
 #include "parse_args.h"
 #include "options.h"
 

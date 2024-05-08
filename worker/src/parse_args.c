@@ -32,6 +32,7 @@ int parse_args(int argc, char *argv[], struct options *opts)
                 break;
         }
     }
+    return 1;
 }
 
 int str_to_int(char *str, struct options *opts)
