@@ -5,7 +5,9 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
+#include <arpa/inet.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "encrypt_pwd.h"
 #include "structs.h"
 #include "parse_args.h"

@@ -26,6 +26,6 @@ int main(int argc, char *argv[])
 void print_help(void)
 {
     char msg[100];
-    sprintf(msg, "Usage: <dir>/worker -s <worker ip> -p <port>");
+    sprintf(msg, "Usage: <dir>/worker -w <worker ip> -p <port>");
     printf("%s\n", msg);
 }

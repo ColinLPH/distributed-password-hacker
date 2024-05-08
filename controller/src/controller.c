@@ -9,6 +9,11 @@ const char set[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 
 
 int run_controller(int argc, char *argv[], struct options *opts)
 {
+    int sockfd;
+    int sockopt = 1;
+    struct sockaddr_in ipv4_addr;
+    int addr_len = sizeof(ipv4_addr);
+
     if(parse_args(argc, argv, opts) == -1)
     {
         //print error, clean up
@@ -38,8 +43,42 @@ int run_controller(int argc, char *argv[], struct options *opts)
     }
 
     //connect with workers, send init, send assign chunks
+    //socket, bind, connect
+    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    {
+        sprintf(opts->err_msg, "socket failed\n");
+        print_err(opts);
+        clean_up(opts);
+        return EXIT_FAILURE;
+    }
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &sockopt, sizeof(sockopt)) == -1) {
+        sprintf(opts->err_msg, "setsocketopt failed\n");
+        print_err(opts);
+        clean_up(opts);
+        return EXIT_FAILURE;
+    }
+
+    if(inet_pton(AF_INET, opts->ctrl_addr, &ipv4_addr.sin_addr) != 1)
+    {
+        sprintf(opts->err_msg, "ient_pton failed\n");
+        print_err(opts);
+        clean_up(opts);
+        return EXIT_FAILURE;
+    }
+    ipv4_addr.sin_family = AF_INET;
+    ipv4_addr.sin_port = htons(opts->port);
+
+    if(connect(sockfd, (struct sockaddr *) &ipv4_addr, sizeof(ipv4_addr)) == -1)
+    {
+        sprintf(opts->err_msg, "bind failed\n");
+        print_err(opts);
+        clean_up(opts);
+        return EXIT_FAILURE;
+    }
+    printf("Connected to worker\n");
     //wait for replies with pollfd, send assigns again
     //coordinate tasks until completion
+    close(sockfd);
     clean_up(opts);
     return EXIT_SUCCESS;
 }

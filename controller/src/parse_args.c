@@ -86,7 +86,6 @@ void options_init(struct options *opts)
     strcpy(opts->algo, "sha512");
     opts->pwd_len = DEFAULT_PWD_LEN;
     opts->port = DEFAULT_PORT;
-    opts->chunk_size = DEFAULT_CHK_SIZE;
 }
 
 int str_to_int(char *str, struct options *opts)
