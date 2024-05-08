@@ -27,6 +27,6 @@ void print_help(void)
 {
     char msg[500];
     sprintf(msg, "Usage: <dir>/controller -s <controller ip> -p <port> ");
-    strcat(msg, "-a <hash algo> -l <pwd len> -c <chunk size (in millions)> <worker ip addresses...>");
+    strcat(msg, "-a <hash algo> -l <pwd len> <worker ip addresses...>");
     printf("%s\n", msg);
 }

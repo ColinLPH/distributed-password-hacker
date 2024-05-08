@@ -28,8 +28,34 @@ int run_worker(int argc, char *argv[], struct options *opts) {
         clean_up(opts);
         return EXIT_FAILURE;
     }
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &sockopt, sizeof(sockopt)) == -1) {
-        sprintf(opts->err_msg, "setsocketopt failed\n");
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &sockopt, sizeof(sockopt)) == -1)
+    {
+        char msg[10];
+        if(errno == EBADF)
+        {
+            strcpy(msg, "EBADF");
+        }
+        if(errno == EDOM)
+        {
+            strcpy(msg, "EDOM");
+        }
+        if(errno == EINVAL)
+        {
+            strcpy(msg, "EINVAL");
+        }
+        if(errno == EISCONN)
+        {
+            strcpy(msg, "EISCONN");
+        }
+        if(errno == ENOPROTOOPT)
+        {
+            strcpy(msg, "ENOPROTOOPT");
+        }
+        if(errno == ENOTSOCK)
+        {
+            strcpy(msg, "ENOTSOCK");
+        }
+        sprintf(opts->err_msg, "setsocketopt failed: %s\n", msg);
         print_err(opts);
         clean_up(opts);
         return EXIT_FAILURE;

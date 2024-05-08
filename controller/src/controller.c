@@ -70,7 +70,7 @@ int run_controller(int argc, char *argv[], struct options *opts)
 
     if(connect(sockfd, (struct sockaddr *) &ipv4_addr, sizeof(ipv4_addr)) == -1)
     {
-        sprintf(opts->err_msg, "bind failed\n");
+        sprintf(opts->err_msg, "connect failed\n");
         print_err(opts);
         clean_up(opts);
         return EXIT_FAILURE;
