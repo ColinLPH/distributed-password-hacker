@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <openssl/evp.h>
+#include <signal.h>
 #include "parse_args.h"
 #include "options.h"
 

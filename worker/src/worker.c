@@ -9,7 +9,7 @@
 #define PKT_SIZE 512
 const char set[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e'};
 
-volatile __sig_atomic_t end_flag = 0;
+volatile sig_atomic_t end_flag = 0;
 
 void sigterm_handler(int signum)
 {
