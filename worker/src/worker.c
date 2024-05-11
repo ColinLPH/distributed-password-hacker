@@ -4,8 +4,18 @@
 
 #include "worker.h"
 
+
 #define SET_SIZE 15
+#define PKT_SIZE 512
 const char set[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e'};
+
+volatile __sig_atomic_t end_flag = 0;
+
+void sigterm_handler(int signum)
+{
+    end_flag = 1;
+}
+
 
 int run_worker(int argc, char *argv[], struct options *opts) {
     int sockfd, controllerfd;
@@ -97,11 +107,56 @@ int run_worker(int argc, char *argv[], struct options *opts) {
 
     printf("Controller connected\n");
 
+    ssize_t rbytes;
+    uint8_t buffer[PKT_SIZE];
+    //read init
+    struct init_packet init_pkt = {.type = UNDEF_TYPE, .algo = NULL, .hashed_str = NULL};
+    rbytes = read(controllerfd, buffer, PKT_SIZE);
+    if(rbytes == -1)
+    {
+        sprintf(opts->err_msg, "read failed\n");
+        print_err(opts);
+        clean_up(opts);
+        return EXIT_FAILURE;
+    }
+    deserialize_init(buffer, &init_pkt);
+    if(init_pkt.type == UNDEF_TYPE)
+    {
+        sprintf(opts->err_msg, "init pkt failed\n");
+        print_err(opts);
+        clean_up(opts);
+        return EXIT_FAILURE;
+    }
+    print_pkt(&init_pkt);
+
+    //read assign
+    //start thread_solve
+    //stay reading for end type
+
     close(controllerfd);
     close(sockfd);
+    clean_up(opts);
     return EXIT_SUCCESS;
     //read init, read assign, solve, raise signal if end received, request assign or send solution
 
+}
+
+void deserialize_init(uint8_t *buffer, struct init_packet *pkt)
+{
+    uint8_t type;
+    size_t count = 0;
+    memcpy(&type, &buffer[count], sizeof(type));
+    count += sizeof(type);
+    if(type == INIT_TYPE)
+    {
+
+    }
+}
+
+void *decrypt_thread(void *arg)
+{
+
+    pthread_exit(NULL);
 }
 
 void clean_up(struct options *opts)
@@ -126,4 +181,42 @@ void print_options(struct options *opts)
 void print_err(struct options *opts)
 {
     printf("%s", opts->err_msg);
+}
+
+void print_help(void)
+{
+    char msg[100];
+    sprintf(msg, "Usage: <dir>/worker -w <worker ip> -p <port>");
+    printf("%s\n", msg);
+}
+
+void print_pkt(void *ptr)
+{
+    struct init_packet *pkt = (struct init_packet *) ptr;
+    switch(pkt->type)
+    {
+        case INIT_TYPE:
+            printf("--------INIT PAKCET--------\n");
+            printf("Algo: %s\n", pkt->algo);
+            print_hash(pkt->algo, pkt->hashed_str);
+            break;
+        case ASSIGN_TYPE:
+            printf("--------ASSIGN PAKCET--------\n");
+            break;
+        case END_TYPE:
+            printf("--------END PAKCET--------\n");
+            break;
+        default:
+            break;
+    }
+}
+
+void print_hash(const char *algo, const unsigned char *hashed_str)
+{
+    printf("%s Hashed_str: ", algo);
+    for(int i = 0; i < EVP_MD_size(EVP_get_digestbyname(algo)); i++) {
+        printf("%02x", hashed_str[i]);
+    }
+    printf("\n");
+
 }

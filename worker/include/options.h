@@ -10,6 +10,7 @@
 #define INIT_TYPE 0
 #define ASSIGN_TYPE 1
 #define END_TYPE 2
+#define UNDEF_TYPE 3
 
 #define DEFAULT_PORT 5000
 
@@ -17,6 +18,7 @@ struct options
 {
     in_port_t port;
     char err_msg[50];
+    char algo[8];
     char *wkr_addr;
 };
 

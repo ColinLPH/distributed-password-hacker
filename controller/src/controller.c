@@ -4,6 +4,8 @@
 
 #include "controller.h"
 
+#include <threads.h>
+
 #define SET_SIZE 15
 const char set[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e'};
 
@@ -22,6 +24,7 @@ int run_controller(int argc, char *argv[], struct options *opts)
         return EXIT_FAILURE;
     }
     print_options(opts);
+
 
     char pwd[opts->pwd_len+1];
     memset(pwd, 0, sizeof(pwd));
@@ -42,45 +45,92 @@ int run_controller(int argc, char *argv[], struct options *opts)
         }
     }
 
-    //connect with workers, send init, send assign chunks
-    //socket, bind, connect
-    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    struct pollfd poll_wkrs[opts->num_wkrs];
+    for(int i = 0; i < opts->num_wkrs; ++i)
     {
-        sprintf(opts->err_msg, "socket failed\n");
-        print_err(opts);
-        clean_up(opts);
-        return EXIT_FAILURE;
-    }
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &sockopt, sizeof(sockopt)) == -1) {
-        sprintf(opts->err_msg, "setsocketopt failed\n");
-        print_err(opts);
-        clean_up(opts);
-        return EXIT_FAILURE;
+        poll_wkrs[i].events = POLLIN;
+        if((poll_wkrs[i].fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        {
+            sprintf(opts->err_msg, "socket failed\n");
+            print_err(opts);
+            clean_up(opts);
+            return EXIT_FAILURE;
+        }
+        if (setsockopt(poll_wkrs[i].fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &sockopt, sizeof(sockopt)) == -1)
+        {
+            sprintf(opts->err_msg, "setsocketopt failed\n");
+            print_err(opts);
+            clean_up(opts);
+            return EXIT_FAILURE;
+        }
+        if(inet_pton(AF_INET, opts->wkr_addrs[i], &ipv4_addr.sin_addr) != 1)
+        {
+            sprintf(opts->err_msg, "ient_pton failed\n");
+            print_err(opts);
+            clean_up(opts);
+            return EXIT_FAILURE;
+        }
+        ipv4_addr.sin_family = AF_INET;
+        ipv4_addr.sin_port = htons(opts->port);
+        if(connect(poll_wkrs[i].fd, (struct sockaddr *) &ipv4_addr, sizeof(ipv4_addr)) == -1)
+        {
+            sprintf(opts->err_msg, "connection to %s failed\n", opts->wkr_addrs[i]);
+            print_err(opts);
+            clean_up(opts);
+            return EXIT_FAILURE;
+        }
+        printf("Connected to worker: %s\n", opts->wkr_addrs[i]);
     }
 
-    if(inet_pton(AF_INET, opts->ctrl_addr, &ipv4_addr.sin_addr) != 1)
+    struct init_packet init_pkt = {INIT_TYPE, opts->algo, hashed_str};
+    uint8_t *buffer = calloc(1, sizeof(init_pkt));
+    serialize_pkt(buffer, &init_pkt);
+    for(int i = 0; i < opts->num_wkrs; ++i)
     {
-        sprintf(opts->err_msg, "ient_pton failed\n");
-        print_err(opts);
-        clean_up(opts);
-        return EXIT_FAILURE;
+        //send init pkts to all workers
+        write(poll_wkrs[i].fd, buffer, sizeof(init_pkt));
     }
-    ipv4_addr.sin_family = AF_INET;
-    ipv4_addr.sin_port = htons(opts->port);
+    //send assign pkts to all workers
+    //start polling for responses
 
-    if(connect(sockfd, (struct sockaddr *) &ipv4_addr, sizeof(ipv4_addr)) == -1)
-    {
-        sprintf(opts->err_msg, "connect failed\n");
-        print_err(opts);
-        clean_up(opts);
-        return EXIT_FAILURE;
+    for (int i = 0; i < opts->num_wkrs; i++) {
+        if (poll_wkrs[i].fd != -1) {
+            close(poll_wkrs[i].fd);
+        }
     }
-    printf("Connected to worker\n");
-    //wait for replies with pollfd, send assigns again
-    //coordinate tasks until completion
-    close(sockfd);
     clean_up(opts);
     return EXIT_SUCCESS;
+}
+
+void serialize_pkt(uint8_t *buffer, void *pkt)
+{
+    struct init_packet * temp = pkt;
+    size_t count = 0;
+    switch(temp->type)
+    {
+        case INIT_TYPE:
+            memcpy(&buffer[count], &temp->type, sizeof(temp->type));
+            count += sizeof(temp->type);
+            memcpy(&buffer[count], &temp->algo, sizeof(temp->algo));
+            count += sizeof(temp->algo);
+            memcpy(&buffer[count], &temp->hashed_str, sizeof(temp->hashed_str));
+            break;
+        case ASSIGN_TYPE:
+            struct assignment_packet *assign = pkt;
+            memcpy(&buffer[count], &assign->type, sizeof(assign->type));
+            count += sizeof(assign->type);
+            memcpy(&buffer[count], &assign->lower_bound, sizeof(assign->lower_bound));
+            count += sizeof(assign->lower_bound);
+            memcpy(&buffer[count], &assign->upper_bound, sizeof(assign->upper_bound));
+            break;
+        case END_TYPE:
+            struct end_packet *end = pkt;
+            memcpy(&buffer[count], &end->type, sizeof(end->type));
+            break;
+        default:
+            printf("Bad packet type\n");
+            break;
+    }
 }
 
 void generate_pwd(char *pwd, const int len)
